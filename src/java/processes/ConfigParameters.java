@@ -90,9 +90,9 @@ public class ConfigParameters {
         params.put("dbName", "musicrec");
         params.put("dbUser", "code");
         params.put("dbPassword", "101201");
-        params.put("tagLastFMURL", "www.last.fm/tag/");
-        params.put("baseFBURL", "graph.facebook.com/v2.5/");
-        params.put("baseLastFMURL", "ws.audioscrobbler.com/2.0/?method=");
+        params.put("tagLastFMURL", "https://www.last.fm/tag/");
+        params.put("baseFBURL", "https://graph.facebook.com/v2.5/");
+        params.put("baseLastFMURL", "https://ws.audioscrobbler.com/2.0/?method=");
         params.put("lastFMAPIKey", "accc242c838637a7ebc2f056a91956d2,9132bf012d7d42091d8465408df7c6b0,dd9ef64ad83b4c3b3d074a38f43cd3da");
         params.put("artistInfoFilePath", "./data/learnedArtists.txt");
         params.put("tagInfoFilePath", "./data/learnedTags.txt");
