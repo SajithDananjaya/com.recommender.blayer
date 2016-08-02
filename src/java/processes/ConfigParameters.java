@@ -83,7 +83,7 @@ public class ConfigParameters {
         params.put("artistCountPerUser", "20");
         params.put("tagCountPerArtist", "2");
         params.put("postCountPerUser", "300");
-        params.put("initialUserCount", "200");
+        params.put("initialUserCount", "20");
         params.put("learningStartBound", "10");
         params.put("userCountPerNewTag", "3");
         params.put("numberOfTracksPerUser", "15");
