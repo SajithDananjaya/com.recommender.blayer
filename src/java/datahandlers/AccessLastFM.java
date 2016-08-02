@@ -18,16 +18,21 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.xml.sax.SAXException;
 
+import processes.ConfigParameters;
+
 /**
  *
  * @author Sajith
  */
 public class AccessLastFM {
-    
-    private static String BASE_URL = "";
+
+    private static String BASE_URL = ConfigParameters.configParameter()
+            .getParameter("baseLastFMURL");
 
     public static URL getURL(String methodParam, int resultCount) throws IOException {
-        String url = BASE_URL + methodParam + "&api_key=";
+        String url = BASE_URL + methodParam + "&api_key="
+                + ConfigParameters.configParameter()
+                .getParameter("lastFMAPIKey") + "&limit=" +resultCount;
         URL tempURL = new URL(url);
         return tempURL;
     }
@@ -52,7 +57,7 @@ public class AccessLastFM {
 
     public static String extractSingleAttribute(Node node, String attributeName) {
         if (node.getNodeType() == Node.ELEMENT_NODE) {
-            
+
             Element element = (Element) node;
             String attributeValue = element
                     .getElementsByTagName(attributeName)
