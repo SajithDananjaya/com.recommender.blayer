@@ -23,9 +23,9 @@ import processes.ConfigParameters;
 public class AccessDB {
     
     private static final Logger LOGGER = AppLogger.getNewLogger(AccessDB.class.getName());
-    private final String DB_USERNAME = ConfigParameters.configParameter().getParameter("");
-    private final String DB_PASSWORD = ConfigParameters.configParameter().getParameter("");
-    private final String DB_NAME = ConfigParameters.configParameter().getParameter("");
+    private final String DB_USERNAME = ConfigParameters.configParameter().getParameter("dbUser");
+    private final String DB_PASSWORD = ConfigParameters.configParameter().getParameter("dbPassword");
+    private final String DB_NAME = ConfigParameters.configParameter().getParameter("dbName");
     private final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
     private final String DB_URL = "jdbc:mysql://localhost/" + DB_NAME;
     private static AccessDB dbConnectionObj; //Singelton DBConnection object
