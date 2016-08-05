@@ -14,6 +14,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
+import objectModels.LastFMUser;
 import org.xml.sax.SAXException;
 
 import org.w3c.dom.Document;
@@ -24,23 +25,64 @@ import processes.AppLogger;
 import processes.ConfigParameters;
 import objectModels.User;
 import objectModels.Tag;
+import objectModels.LastFMUser;
+import objectModels.Artist;
 
 /**
  *
  * @author Sajith
  */
 public class LastFMDataHandler {
-
+    
     private static final Logger LOGGER
             = AppLogger.getNewLogger(AccessLastFM.class.getName());
-
+    
     private static int currentTagID = 1;
     private static int currentUserID = 1;
-
+    
     private static List<User> initialUsers = new ArrayList<>();
     //Stores tag name as key and user object as the value
     private static HashMap<String, Tag> initailTags = new HashMap<>();
+    //Stores tag name as key and user object as the value
+    private static HashMap<String, Artist> initialArtists = new HashMap<>();
+    
+    public static void initiateUsers() {
+        loadPreviousData();
+        for (String user : getBaseUsers()) {
+            LastFMUser tempUser = new LastFMUser(user);//Initates the LastFm User
+            for (String artist : getUserArtistList(user)) {
+                if (!initialArtists.containsKey(artist)) {
+                    //If the artist is not initated initated the artists
+                    initiateArtist(artist);
+                }
+                for (Tag tag : initialArtists.get(artist).getTagList()) {
+                    //adds each artists tags to user to generate user taste
+                    tempUser.addTag(tag);
+                }
+            }
+            initialUsers.add(tempUser);
+        }
+    }
+    
+    private static void initiateArtist(String artist) {
+        Artist tempArtist = new Artist(artist);
+        List<Tag> artistTags = new ArrayList<>();
+        try {
+            for (String tag : getArtistTags(artist)) {
+                if (!initailTags.containsKey(tag)) {
+                    Tag tempTag = new Tag(currentTagID++, tag);
+                    initailTags.put(tag, tempTag);
+                }
+                artistTags.add(initailTags.get(tag));
+            }
+        } catch (Exception e) {
+            System.out.println("initiate artist failed [" + artist + "]");
+        }
+        tempArtist.addTagSet(artistTags);
+        initialArtists.put(artist, tempArtist);
+    }
 
+    //Returns a string list of users
     public static List<String> getBaseUsers() {
         String baseUser = ConfigParameters.configParameter().getParameter("lastFMUserName");
         int userCount = Integer.parseInt(
@@ -60,11 +102,12 @@ public class LastFMDataHandler {
         return usersList;
     }
 
+    //Returns a string list of Artist's name for the given user
     public static List<String> getUserArtistList(String user) {
         int artistCount = Integer.parseInt(
                 ConfigParameters.configParameter().getParameter("artistCountPerUser"));
         String method = "user.getTopArtists"
-                + "&user="+user;
+                + "&user=" + user;
         List<String> artistList = null;
         try {
             URL url = AccessLastFM.getURL(method, artistCount);
@@ -77,12 +120,13 @@ public class LastFMDataHandler {
         }
         return artistList;
     }
-    
-    public static List<String> getArtistTags(String artistName){
+
+    //Returns a string list of tags for the given artist
+    public static List<String> getArtistTags(String artistName) {
         int artistTagCount = Integer.parseInt(
                 ConfigParameters.configParameter().getParameter("tagCountPerArtist"));
         String method = "artist.getTopTags"
-                + "&artist="+artistName;
+                + "&artist=" + artistName;
         List<String> artistTagList = null;
         try {
             URL url = AccessLastFM.getURL(method, artistTagCount);
@@ -90,11 +134,12 @@ public class LastFMDataHandler {
             NodeList artistTagInfo = AccessLastFM.getElementList(artistListXML, "tag");
             artistTagList = AccessLastFM.extractAttributes(artistTagInfo, "name");
         } catch (IOException | ParserConfigurationException | SAXException ex) {
-            
             String msg = "Artist artistTagList unreachable or currupted";
-            LOGGER.log(Level.SEVERE, msg, ex);
-        }finally{}
+            //LOGGER.log(Level.SEVERE, msg, ex);
+        }
         return artistTagList;
     }
-
+    
+    private static void loadPreviousData() {
+    }
 }
