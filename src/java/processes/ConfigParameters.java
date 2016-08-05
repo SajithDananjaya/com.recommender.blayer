@@ -80,10 +80,10 @@ public class ConfigParameters {
     private static void setParameters() {
         params = new HashMap<>();
         params.put("lastFMUserName", "sajithdr");
-        params.put("artistCountPerUser", "20");
+        params.put("artistCountPerUser", "5");
         params.put("tagCountPerArtist", "2");
         params.put("postCountPerUser", "300");
-        params.put("initialUserCount", "20");
+        params.put("initialUserCount", "2");
         params.put("learningStartBound", "10");
         params.put("userCountPerNewTag", "3");
         params.put("numberOfTracksPerUser", "15");
