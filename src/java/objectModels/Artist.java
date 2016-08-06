@@ -20,7 +20,8 @@ public class Artist {
     public Artist(String name) {
         this.name = name;
         tagList = new ArrayList<>();
-        tagList.add(new Tag(0, "6521432"));
+        //Breaks the code for taste string build
+        //tagList.add(new Tag(0, "6521432")); 
     }
 
     public String getName() {
