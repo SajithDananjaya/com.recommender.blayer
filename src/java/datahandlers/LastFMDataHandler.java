@@ -5,6 +5,9 @@
  */
 package datahandlers;
 
+import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileWriter;
 import java.net.URL;
 import java.util.logging.Logger;
 import java.util.logging.Level;
@@ -33,19 +36,20 @@ import objectModels.Artist;
  * @author Sajith
  */
 public class LastFMDataHandler {
-    
+
     private static final Logger LOGGER
             = AppLogger.getNewLogger(AccessLastFM.class.getName());
-    
+
     private static int currentTagID = 1;
     private static int currentUserID = 1;
+
     
-    private static List<User> initialUsers = new ArrayList<>();
+    private static HashMap<String, User> initialUsers = new HashMap<>();
     //Stores tag name as key and user object as the value
-    private static HashMap<String, Tag> initailTags = new HashMap<>();
+    private static HashMap<String, Tag> initialTags = new HashMap<>();
     //Stores tag name as key and user object as the value
     private static HashMap<String, Artist> initialArtists = new HashMap<>();
-    
+
     public static void initiateUsers() {
         loadPreviousData();
         for (String user : getBaseUsers()) {
@@ -60,20 +64,21 @@ public class LastFMDataHandler {
                     tempUser.addTag(tag);
                 }
             }
-            initialUsers.add(tempUser);
+            initialUsers.put(currentUserID+"",tempUser);
+            currentUserID++;
         }
     }
-    
+
     private static void initiateArtist(String artist) {
         Artist tempArtist = new Artist(artist);
         List<Tag> artistTags = new ArrayList<>();
         try {
             for (String tag : getArtistTags(artist)) {
-                if (!initailTags.containsKey(tag)) {
+                if (!initialTags.containsKey(tag)) {
                     Tag tempTag = new Tag(currentTagID++, tag);
-                    initailTags.put(tag, tempTag);
+                    initialTags.put(tag, tempTag);
                 }
-                artistTags.add(initailTags.get(tag));
+                artistTags.add(initialTags.get(tag));
             }
         } catch (Exception e) {
             System.out.println("initiate artist failed [" + artist + "]");
@@ -139,7 +144,73 @@ public class LastFMDataHandler {
         }
         return artistTagList;
     }
-    
+
     private static void loadPreviousData() {
     }
+
+    public static void buildDataSheet() {
+        String dataSheetPath = ConfigParameters
+                .configParameter().getParameter("dataSetFilePath");
+        BufferedWriter tempWriter = getWriter(dataSheetPath);
+        
+        try {
+            tempWriter.write("@relation dataSet");
+            tempWriter.newLine();
+            tempWriter.newLine();
+
+            tempWriter.write("@attribute userID numeric");
+            tempWriter.newLine();
+
+            for (int index = 0; index < currentTagID - 1; index++) {
+                tempWriter.write("@attribute tag" + index + " numeric");
+                tempWriter.newLine();
+            }
+
+            tempWriter.newLine();
+            tempWriter.write("@data");
+            tempWriter.newLine();
+
+            for (String userID : initialUsers.keySet()) {
+                tempWriter.write(userID + initialUsers.
+                        get(userID).getTasteString(currentTagID - 1));
+                tempWriter.newLine();
+            }
+            tempWriter.close();
+
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "File path for saving dataset is invalid", e);
+        }
+    }
+    
+    private static BufferedWriter getWriter(String filePath) {
+        File tempFile = new File(filePath);
+        BufferedWriter bufferedWriter = null;
+        try {
+            if (!tempFile.exists()) {
+                tempFile.createNewFile();
+            }
+            FileWriter fileWriter = new FileWriter(tempFile.getAbsoluteFile());
+            bufferedWriter = new BufferedWriter(fileWriter);
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "File path is invalid", e);
+        }
+        return bufferedWriter;
+    }
+
+    public static List<User> getInitialUserList() {
+        List<User> userList = new ArrayList<>();
+        for(String userID : initialUsers.keySet()){
+            userList.add(initialUsers.get(userID));
+        }
+        return userList;
+    }
+
+    public static int getInitialTagCount() {
+        return initialTags.size();
+    }
+
+    public static HashMap<String, Tag> getInitialTags() {
+        return initialTags;
+    }
+
 }
