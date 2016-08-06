@@ -5,6 +5,7 @@
  */
 package objectModels;
 
+import java.util.Arrays;
 import java.util.HashMap;
 
 /**
@@ -41,4 +42,32 @@ public abstract class User {
         }
         return 0;
     }
+    
+    public void filterTaste() {
+        HashMap<Tag, Integer> tempTasteMap = new HashMap<>();
+        for (Tag t : this.musicTaste.keySet()) {
+            int tagCount = this.musicTaste.get(t);
+            if (tagCount > 2) {
+                tempTasteMap.put(t, tagCount);
+            }
+        }
+        this.musicTaste = tempTasteMap;
+    }
+    
+    public String getTasteString(int totalTagCount) {
+        String[] tasteArray = new String[totalTagCount];
+        Arrays.fill(tasteArray, "0");
+        for (Tag t : musicTaste.keySet()) {
+            tasteArray[t.getID() - 1] = musicTaste.get(t) + "";
+        }
+        return arrayToString(tasteArray);
+    }
+
+    private String arrayToString(String[] tasteArray) {
+        String array = "";
+        for (String s : tasteArray) {
+            array = array + "," + s;
+        }
+        return array;
+    } 
 }
