@@ -19,7 +19,7 @@ import java.util.Random;
  */
 public class ConfigParameters {
 
-    public static ConfigParameters configs = null;
+    private static ConfigParameters configs = null;
     private static final String CONFIG_FILE_PATH = "appconfig/config";
     private static HashMap<String, String> params;
 
@@ -81,9 +81,9 @@ public class ConfigParameters {
         params = new HashMap<>();
         params.put("lastFMUserName", "sajithdr");
         params.put("artistCountPerUser", "5");
-        params.put("tagCountPerArtist", "2");
+        params.put("tagCountPerArtist", "5");
         params.put("postCountPerUser", "300");
-        params.put("initialUserCount", "2");
+        params.put("initialUserCount", "50");
         params.put("learningStartBound", "10");
         params.put("userCountPerNewTag", "3");
         params.put("numberOfTracksPerUser", "15");
