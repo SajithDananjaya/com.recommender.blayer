@@ -64,6 +64,7 @@ public class LastFMDataHandler {
                     tempUser.addTag(tag);
                 }
             }
+            tempUser.filterTaste();
             initialUsers.put(currentUserID+"",tempUser);
             currentUserID++;
         }
