@@ -11,6 +11,8 @@ import java.io.FileReader;
 import java.net.URL;
 import java.util.HashMap;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Random;
 
 /**
@@ -20,7 +22,7 @@ import java.util.Random;
 public class ConfigParameters {
 
     private static ConfigParameters configs = null;
-    private static final String CONFIG_FILE_PATH = "appconfig/config";
+    private static final String CONFIG_FILE_PATH = "configs";
     private static HashMap<String, String> params;
 
     private ConfigParameters() {
@@ -29,40 +31,33 @@ public class ConfigParameters {
     public static ConfigParameters configParameter() {
         if (configs == null) {
             configs = new ConfigParameters();
-            setParameters();
+            try {
+                getConfigFileContent();
+            } catch (Exception e) {
+                System.out.println("Reading external file failed");
+                setParameters();
+            }
         }
         return configs;
     }
 
-    public static void getFileContent()
-            throws IOException {
-
-        URL location = ConfigParameters.class.getProtectionDomain().getCodeSource().getLocation();
-        System.out.println(location.toString());
-        String basePath = location.toString().split("build")[0];
-        BufferedReader file = getConfigFile(basePath + CONFIG_FILE_PATH);
+    private static void getConfigFileContent() throws IOException{
+        InputStream is = ConfigParameters
+                .class.getResourceAsStream(CONFIG_FILE_PATH);
+        BufferedReader file = new BufferedReader(new InputStreamReader(is));
         String textLine = "";
+        params = new HashMap<>();
         while ((textLine = file.readLine()) != null) {
-            System.out.println(textLine);
+            String[] data = textLine.split("::");
+            params.put(data[0], data[1]);
         }
-    }
-
-    private static BufferedReader getConfigFile(String filePath) {
-        File tempFile = new File(filePath);
-        FileReader fileReader = null;
-        try {
-            fileReader = new FileReader(tempFile);
-        } catch (IOException e) {
-            System.err.println(e.toString());
-        }
-        return new BufferedReader(fileReader);
     }
 
     public String getParameter(String parameterName) {
         String parameter = "None";
         if (params.containsKey(parameterName)) {
             if (parameterName == "lastFMAPIKey") {
-                parameter= getAPIKey();
+                parameter = getAPIKey();
             } else {
                 parameter = params.get(parameterName);
             }
@@ -76,7 +71,7 @@ public class ConfigParameters {
         int index = (r.nextInt(apiKeys.length - 0) + 0);
         return apiKeys[index];
     }
-    
+
     private static void setParameters() {
         params = new HashMap<>();
         params.put("lastFMUserName", "sajithdr");
