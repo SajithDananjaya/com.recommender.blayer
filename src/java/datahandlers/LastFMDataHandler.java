@@ -213,5 +213,9 @@ public class LastFMDataHandler {
     public static HashMap<String, Tag> getInitialTags() {
         return initialTags;
     }
+    
+    public static HashMap<String, User> getInitiatUserList(){
+        return initialUsers;
+    }
 
 }
