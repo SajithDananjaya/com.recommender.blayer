@@ -69,5 +69,10 @@ public abstract class User {
             array = array + "," + s;
         }
         return array;
-    } 
+    }
+    
+    @Override 
+    public String toString(){
+        return "["+this.username+"]";
+    }
 }
