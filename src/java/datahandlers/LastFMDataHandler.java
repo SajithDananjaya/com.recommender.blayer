@@ -5,19 +5,23 @@
  */
 package datahandlers;
 
+import java.awt.BorderLayout;
+import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileReader;
 import java.io.FileWriter;
 import java.net.URL;
 import java.util.logging.Logger;
 import java.util.logging.Level;
 
 import java.io.IOException;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import javax.xml.parsers.ParserConfigurationException;
-import objectModels.LastFMUser;
 import org.xml.sax.SAXException;
 
 import org.w3c.dom.Document;
@@ -30,6 +34,7 @@ import objectModels.User;
 import objectModels.Tag;
 import objectModels.LastFMUser;
 import objectModels.Artist;
+import objectModels.Song;
 
 /**
  *
@@ -43,12 +48,13 @@ public class LastFMDataHandler {
     private static int currentTagID = 1;
     private static int currentUserID = 1;
 
-    
     private static HashMap<String, User> initialUsers = new HashMap<>();
-    //Stores tag name as key and user object as the value
+    //Stores tag name as key and Tag object as the value
     private static HashMap<String, Tag> initialTags = new HashMap<>();
-    //Stores tag name as key and user object as the value
+    //Stores Artist name as key and Artist object as the value
     private static HashMap<String, Artist> initialArtists = new HashMap<>();
+
+    private static HashMap<String, Song> initalSongList = new HashMap<>();
 
     public static void initiateUsers() {
         loadPreviousData();
@@ -65,9 +71,12 @@ public class LastFMDataHandler {
                 }
             }
             tempUser.filterTaste();
-            initialUsers.put(currentUserID+"",tempUser);
+            tempUser.addSongList(getUserSongList(user));
+            initialUsers.put(currentUserID + "", tempUser);
             currentUserID++;
         }
+        saveTagInfo();
+        saveArtistInfo();
     }
 
     private static void initiateArtist(String artist) {
@@ -146,14 +155,202 @@ public class LastFMDataHandler {
         return artistTagList;
     }
 
+    public static List<Song> getUserSongList(String userName) {
+        List<Song> userSongList = new ArrayList<>();
+        for (String mbid : getSongList(userName)) {
+            if (mbid.length() > 0) {
+                if (!initalSongList.containsKey(mbid)) {
+                    initiateSong(mbid);
+                }
+                userSongList.add(initalSongList.get(mbid));
+            }
+        }
+        return userSongList;
+    }
+
+    private static List<String> getSongList(String user) {
+        int songCount = Integer.parseInt(ConfigParameters
+                .configParameter().getParameter("numberOfTracksPerUser"));
+        String method = "user.getLovedTracks"
+                + "&user=" + user;
+        List<String> songsList = null;
+        try {
+            URL url = AccessLastFM.getURL(method, songCount);
+            Document songListXML = AccessLastFM.getResponse(url);
+            NodeList songListInfo = AccessLastFM
+                    .getElementList(songListXML, "track");
+            songsList = AccessLastFM.extractAttributes(songListInfo, "mbid");
+        } catch (IOException | ParserConfigurationException | SAXException ex) {
+            String msg = "User track list unreachable or currupted";
+            //LOGGER.log(Level.SEVERE, msg, ex);
+        }
+        return songsList;
+    }
+
+    public static void initiateSong(String mbid) {
+        String method = "track.getInfo"
+                + "&mbid=" + mbid;
+        try {
+            URL url = AccessLastFM.getURL(method, 1);
+            System.out.println(url.toString());
+            Document trackInfoXML = AccessLastFM.getResponse(url);
+            Node trackInfo = AccessLastFM
+                    .getElementList(trackInfoXML, "track").item(0);
+            Node artistInfo = AccessLastFM
+                    .getElementList(trackInfoXML, "artist").item(0);
+            Node albumInfo = AccessLastFM
+                    .getElementList(trackInfoXML, "album").item(0);
+            Song tempSong = new Song();
+            tempSong.setMbid(mbid);
+            tempSong.setTrackName(AccessLastFM
+                    .extractSingleAttribute(trackInfo, "name", 0).replace("'", ""));
+            tempSong.setTrackURL(AccessLastFM
+                    .extractSingleAttribute(trackInfo, "url", 0).replace("'", ""));
+            tempSong.setArtistName(AccessLastFM
+                    .extractSingleAttribute(artistInfo, "name", 0).replace("'", ""));
+            tempSong.setImageURL(AccessLastFM
+                    .extractSingleAttribute(albumInfo, "image", 6));
+            saveSong(tempSong);
+
+        } catch (IOException | ParserConfigurationException | SAXException ex) {
+            String msg = "Track inforamtion is unreachable or currupted";
+            //LOGGER.log(Level.SEVERE, msg, ex);
+        }
+    }
+
+    private static int saveSong(Song song) {
+        String sqlQ = "INSERT INTO song_information"
+                + "(mbid,artist,song,song_url,img_url)"
+                + "VALUES('" + song.getMbid() + "','" + song.getArtistName()
+                + "','" + song.getTrackName() + "','" + song.getTrackURL()
+                + "','" + song.getImageURL() + "')";
+        return AccessDB.getDBConnection().saveData(sqlQ);
+    }
+
     private static void loadPreviousData() {
+        currentTagID = 1;
+        initialTags = loadSavedTags();
+        currentTagID = initialTags.size() + 1;
+        initialArtists = loadSavedArtists();
+        loadSavedTracks();
+    }
+    
+    private static void loadSavedTracks(){
+        String sqlQ = "Select mbid,artist,song,song_url,img_url from song_information";
+        ResultSet rs = AccessDB.getDBConnection().getData(sqlQ);
+        try {
+            while (rs.next()) {
+                Song tempSong = new Song();
+                tempSong.setMbid(rs.getString("mbid"));
+                tempSong.setArtistName(rs.getString("artist"));
+                tempSong.setTrackName(rs.getString("song"));
+                tempSong.setTrackURL(rs.getString("song_url"));
+                tempSong.setImageURL(rs.getString("img_url"));
+                initalSongList.put(tempSong.getMbid(), tempSong);
+            }
+        } catch (SQLException e) {
+            LOGGER.log(Level.WARNING, "Loading saved tracks failed");
+        }
+    }
+    
+    public static HashMap<String, Tag> loadSavedTags() {
+        String filePath = ConfigParameters
+                .configParameter().getParameter("tagInfoFilePath");
+        HashMap<String, Tag> tempMap = new HashMap<>();
+        BufferedReader dataReader = getReader(filePath);
+        try {
+            String dataLine = "";
+            while ((dataLine = dataReader.readLine()) != null) {
+                String[] data = dataLine.split(",");
+                int tagID = Integer.parseInt(data[0]);
+                String tagName = data[1];
+                Tag tempTag = new Tag(tagID, tagName);
+                tempMap.put(tagName, tempTag);
+            }
+
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Learning Saved Tags failed");
+        }
+        return tempMap;
+    }
+
+    public static HashMap<String, Artist> loadSavedArtists() {
+        String filePath = ConfigParameters
+                .configParameter().getParameter("artistInfoFilePath");
+        HashMap<String, Artist> tempMap = new HashMap<>();
+        BufferedReader dataReader = getReader(filePath);
+        try {
+            String dataLine = "";
+            while ((dataLine = dataReader.readLine()) != null) {
+                String[] data = dataLine.split(",");
+                Artist tempArtist = new Artist(data[0]);
+                if (data.length > 1) {
+                    for (int index = 1; index < data.length; index++) {
+                        if (initialTags.containsKey(data[index])) {
+                            Tag tag = initialTags.get(data[index]);
+                            tempArtist.addTag(tag);
+                        }
+                    }
+                }
+                tempMap.put(tempArtist.getName(), tempArtist);
+            }
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Learning Saved Artist failed");
+        }
+        return tempMap;
+    }
+
+    private static BufferedReader getReader(String filePath) {
+        File tempFile = new File(filePath);
+        FileReader fileReader = null;
+        try {
+            fileReader = new FileReader(tempFile);
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Reading file failed");
+        }
+        return new BufferedReader(fileReader);
+    }
+
+    public static void saveTagInfo() {
+        BufferedWriter tempWriter = getWriter(ConfigParameters
+                .configParameter().getParameter("tagInfoFilePath"));
+        try {
+            for (String tagName : initialTags.keySet()) {
+                Tag t = initialTags.get(tagName);
+                String data = t.getID() + "," + t.getName();
+                // System.err.println(data);
+                tempWriter.write(data + "\n");
+            }
+            tempWriter.close();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Saving Tag Info failed");
+        }
+    }
+
+    private static void saveArtistInfo() {
+        BufferedWriter tempWriter = getWriter(ConfigParameters
+                .configParameter().getParameter("artistInfoFilePath"));
+        try {
+            for (String artistName : initialArtists.keySet()) {
+                try {
+                    Artist artist = initialArtists.get(artistName);
+                    String data = artist.getName() + artist.getTagListString();
+                    tempWriter.write(data + "\n");
+                } catch (Exception e) {
+                    LOGGER.log(Level.INFO, "Saving " + artistName + " failed");
+                }
+            }
+            tempWriter.close();
+        } catch (IOException e) {
+            LOGGER.log(Level.SEVERE, "Saving Artist Info failed");
+        }
     }
 
     public static void buildDataSheet() {
         String dataSheetPath = ConfigParameters
                 .configParameter().getParameter("dataSetFilePath");
         BufferedWriter tempWriter = getWriter(dataSheetPath);
-        
+
         try {
             tempWriter.write("@relation dataSet");
             tempWriter.newLine();
@@ -182,7 +379,7 @@ public class LastFMDataHandler {
             LOGGER.log(Level.SEVERE, "File path for saving dataset is invalid", e);
         }
     }
-    
+
     private static BufferedWriter getWriter(String filePath) {
         File tempFile = new File(filePath);
         BufferedWriter bufferedWriter = null;
@@ -200,7 +397,7 @@ public class LastFMDataHandler {
 
     public static List<User> getInitialUserList() {
         List<User> userList = new ArrayList<>();
-        for(String userID : initialUsers.keySet()){
+        for (String userID : initialUsers.keySet()) {
             userList.add(initialUsers.get(userID));
         }
         return userList;
@@ -213,9 +410,19 @@ public class LastFMDataHandler {
     public static HashMap<String, Tag> getInitialTags() {
         return initialTags;
     }
-    
-    public static HashMap<String, User> getInitiatUserList(){
+
+    public static HashMap<String, User> getInitiatUserList() {
         return initialUsers;
     }
 
+    public static Artist getArtistInformation(String artistName) {
+        if (initialArtists.containsKey(artistName)) {
+            return initialArtists.get(artistName);
+        }
+        return null;
+    }
+    
+    public static User getInitiatedUser(String userID){
+        return initialUsers.get(userID);
+    }
 }
