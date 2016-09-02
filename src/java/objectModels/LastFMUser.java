@@ -28,5 +28,8 @@ public class LastFMUser extends User {
     public void addSong(Song song) {
         likedSongs.add(song);
     }
-
+    
+    public void addSongList(List<Song> songsList){
+        this.likedSongs = songsList;
+    }
 }
