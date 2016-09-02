@@ -59,5 +59,9 @@ public class Song {
     public void setTrackURL(String trackURL) {
         this.trackURL = trackURL;
     }
+    
+    public String toString(){
+        return "["+this.artistName+" : "+this.trackName+"]";
+    }
 
 }
