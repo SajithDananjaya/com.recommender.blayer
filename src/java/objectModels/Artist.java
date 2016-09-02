@@ -52,5 +52,15 @@ public class Artist {
     public String toString() {
         return "Artist: " + this.name + " " + this.tagList;
     }
+    
+    public String getTagListString() {
+        String stringTagList = "";
+        if (tagList.size() > 0) {
+            for (Tag t : tagList) {
+                stringTagList = stringTagList + "," + t.getName();
+            }
+        }
+        return stringTagList;
+    }
 
 }
