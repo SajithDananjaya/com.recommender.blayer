@@ -32,7 +32,7 @@ public class AccessLastFM {
     public static URL getURL(String methodParam, int resultCount) throws IOException {
         String url = BASE_URL + methodParam + "&api_key="
                 + ConfigParameters.configParameter()
-                .getParameter("lastFMAPIKey") + "&limit=" +resultCount;
+                .getParameter("lastFMAPIKey") + "&limit=" + resultCount;
         URL tempURL = new URL(url);
         return tempURL;
     }
@@ -48,27 +48,43 @@ public class AccessLastFM {
     }
 
     public static NodeList getElementList(Document docXML, String elementName) {
-        NodeList elementList = docXML.getElementsByTagName(elementName);
-        if (elementList.getLength() == 0) {
-            return null;
+        NodeList elementList=null;
+        try{
+            elementList = docXML.getElementsByTagName(elementName);
+        }catch(Exception e){    
         }
         return elementList;
     }
 
-    public static String extractSingleAttribute(Node node, String attributeName) {
+    public static String extractSingleAttribute(Node node,
+            String attributeName, int valueAt) {
+        
+        if(node == null){
+            return "NA";
+        }
+        
         if (node.getNodeType() == Node.ELEMENT_NODE) {
 
             Element element = (Element) node;
-            String attributeValue = element
-                    .getElementsByTagName(attributeName)
-                    .item(0)
-                    .getTextContent();
-
+            NodeList values = element
+                    .getElementsByTagName(attributeName);
+            String attributeValue = "";
+            if (valueAt==0) {
+                attributeValue = values.item(0).getTextContent();
+            } else {
+                int index = values.getLength();
+                if(index > valueAt){
+                    attributeValue = values.item(valueAt).getTextContent();
+                }
+                else{
+                    attributeValue = values.item(index-1).getTextContent();
+                }
+            }
             if (attributeValue.length() > 0) {
                 return attributeValue;
             }
         }
-        return null;
+        return "NA";
     }
 
     public static List<String>
@@ -91,5 +107,4 @@ public class AccessLastFM {
         }
         return attributeList;
     }
-
 }
