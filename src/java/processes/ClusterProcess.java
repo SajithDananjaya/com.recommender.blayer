@@ -131,7 +131,8 @@ public class ClusterProcess {
 
     private int clusterCount(Instances dataPoints) {
         int totalDataCount = dataPoints.numInstances();
-        return (int) Math.sqrt(totalDataCount);
+        return totalDataCount/3;
+//        return (int) Math.sqrt(totalDataCount);
     }
     
     public String[] getClusterList(){
