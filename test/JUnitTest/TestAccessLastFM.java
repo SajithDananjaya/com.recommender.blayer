@@ -89,7 +89,7 @@ public class TestAccessLastFM {
         String author = "Gambardella, Matthew";
         NodeList books = AccessLastFM.getElementList(doc, "book");
         String extractedAuthor 
-                = AccessLastFM.extractSingleAttribute(books.item(0), "author");
+                = AccessLastFM.extractSingleAttribute(books.item(0), "author",0);
         assertEquals(author, extractedAuthor);
     }
 }
