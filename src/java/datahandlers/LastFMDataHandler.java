@@ -202,14 +202,42 @@ public class LastFMDataHandler {
                     .getElementList(trackInfoXML, "album").item(0);
             Song tempSong = new Song();
             tempSong.setMbid(mbid);
-            tempSong.setTrackName(AccessLastFM
-                    .extractSingleAttribute(trackInfo, "name", 0).replace("'", ""));
-            tempSong.setTrackURL(AccessLastFM
-                    .extractSingleAttribute(trackInfo, "url", 0).replace("'", ""));
-            tempSong.setArtistName(AccessLastFM
-                    .extractSingleAttribute(artistInfo, "name", 0).replace("'", ""));
-            tempSong.setImageURL(AccessLastFM
-                    .extractSingleAttribute(albumInfo, "image", 6));
+
+            String trackName = "N/A";
+            if (AccessLastFM
+                    .extractSingleAttribute(trackInfo, "name", 0) != null) {
+                trackName = AccessLastFM
+                        .extractSingleAttribute(trackInfo, "name", 0)
+                        .replace("'", "");
+            }
+
+            String trackURL = "N/A";
+            if (AccessLastFM
+                    .extractSingleAttribute(trackInfo, "url", 0) != null) {
+                trackURL = AccessLastFM
+                        .extractSingleAttribute(trackInfo, "url", 0)
+                        .replace("'", "");
+            }
+
+            String artistName = "N/A";
+            if (AccessLastFM
+                    .extractSingleAttribute(artistInfo, "name", 0) != null) {
+                artistName = AccessLastFM
+                        .extractSingleAttribute(artistInfo, "name", 0)
+                        .replace("'", "");
+            }
+            
+            String trackImage = "N/A";
+            if (AccessLastFM
+                    .extractSingleAttribute(artistInfo, "name", 0) != null) {
+                trackImage = AccessLastFM
+                    .extractSingleAttribute(albumInfo, "image", 6);
+            }
+
+            tempSong.setTrackName(trackName);
+            tempSong.setTrackURL(trackURL);
+            tempSong.setArtistName(artistName);
+            tempSong.setImageURL(trackImage);
             saveSong(tempSong);
 
         } catch (IOException | ParserConfigurationException | SAXException ex) {
@@ -234,8 +262,8 @@ public class LastFMDataHandler {
         initialArtists = loadSavedArtists();
         loadSavedTracks();
     }
-    
-    private static void loadSavedTracks(){
+
+    private static void loadSavedTracks() {
         String sqlQ = "Select mbid,artist,song,song_url,img_url from song_information";
         ResultSet rs = AccessDB.getDBConnection().getData(sqlQ);
         try {
@@ -252,7 +280,7 @@ public class LastFMDataHandler {
             LOGGER.log(Level.WARNING, "Loading saved tracks failed");
         }
     }
-    
+
     public static HashMap<String, Tag> loadSavedTags() {
         String filePath = ConfigParameters
                 .configParameter().getParameter("tagInfoFilePath");
@@ -421,8 +449,8 @@ public class LastFMDataHandler {
         }
         return null;
     }
-    
-    public static User getInitiatedUser(String userID){
+
+    public static User getInitiatedUser(String userID) {
         return initialUsers.get(userID);
     }
 }
