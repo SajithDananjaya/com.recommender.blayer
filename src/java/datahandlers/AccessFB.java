@@ -14,6 +14,11 @@ import objectModels.FacebookUser;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import com.restfb.DefaultFacebookClient;
+import com.restfb.FacebookClient;
+import com.restfb.FacebookClient.AccessToken;
+import com.restfb.Version;
+
 /**
  *
  * @author Sajith
@@ -49,13 +54,25 @@ public class AccessFB {
         }
         return jasonObjects;
     }
-    
-    public static JSONObject getObject(String response){
+
+    public static JSONObject getObject(String response) {
         JSONObject json = new JSONObject(response);
         JSONArray jarray = json.getJSONArray("data");
         return jarray.getJSONObject(0);
     }
-    
 
+    public static String extenedAccessToken(String currentToken) {
+        String extendedAccessToken = "";
+        String appID = ConfigParameters
+                .configParameter().getParameter("appInfoOne");
+        String appSecret = ConfigParameters
+                .configParameter().getParameter("appInfoTwo");
+        FacebookClient fbConn = 
+                new DefaultFacebookClient(currentToken, Version.LATEST);
+        AccessToken extended = fbConn
+                .obtainExtendedAccessToken(appID, appSecret);
+        extendedAccessToken = extended.getAccessToken();
+        return extendedAccessToken;
+    }
 
 }
