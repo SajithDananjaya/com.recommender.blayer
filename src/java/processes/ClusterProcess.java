@@ -22,18 +22,28 @@ import datahandlers.LastFMDataHandler;
  * @author Sajith
  */
 public class ClusterProcess {
-    
+
     private static final Logger LOGGER = AppLogger
             .getNewLogger(ClusterProcess.class.getName());
-    
+
     private SimpleKMeans dataGraph;
     private Instances userPoints;
     private boolean clusterInitiated = false;
     private String[] clusters;
 
-    public String[] getRelatedUsers(User user) {
+    public int getClusterID(User user) {
         Instance userInstance = toInstance(user, userPoints);
         int clusterNumber = getRelativeCluster(userInstance);
+        return clusterNumber;
+    }
+
+    public String[] getRelatedUsers(User user) {
+        int clusterNumber = getClusterID(user);
+        String[] userIDs = getClusterUser(clusterNumber);
+        return userIDs;
+    }
+
+    public String[] getClusterUser(int clusterNumber) {
         String[] userIDs = clusters[clusterNumber].split(",");
         return userIDs;
     }
@@ -131,16 +141,16 @@ public class ClusterProcess {
 
     private int clusterCount(Instances dataPoints) {
         int totalDataCount = dataPoints.numInstances();
-        return totalDataCount/3;
+        return totalDataCount / 3;
 //        return (int) Math.sqrt(totalDataCount);
     }
-    
-    public String[] getClusterList(){
+
+    public String[] getClusterList() {
         return this.clusters;
     }
-    
-    public void printCluster(){
-        for(String s: clusters){
+
+    public void printCluster() {
+        for (String s : clusters) {
             System.out.println(s);
         }
     }
