@@ -42,7 +42,7 @@ public abstract class User {
         }
         return 0;
     }
-    
+
     public void filterTaste() {
         HashMap<Tag, Integer> tempTasteMap = new HashMap<>();
         for (Tag t : this.musicTaste.keySet()) {
@@ -53,7 +53,7 @@ public abstract class User {
         }
         this.musicTaste = tempTasteMap;
     }
-    
+
     public String getTasteString(int totalTagCount) {
         String[] tasteArray = new String[totalTagCount];
         Arrays.fill(tasteArray, "0");
@@ -70,9 +70,17 @@ public abstract class User {
         }
         return array;
     }
-    
-    @Override 
-    public String toString(){
-        return "["+this.username+"]";
+
+    @Override
+    public String toString() {
+        return "[" + this.getUsername() + "]";
+    }
+
+    public String getUsername() {
+        return username;
+    }
+
+    public void setUsername(String username) {
+        this.username = username;
     }
 }
