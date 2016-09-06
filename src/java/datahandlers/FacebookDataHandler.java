@@ -98,4 +98,17 @@ public class FacebookDataHandler {
         }
         return artists;
     }
+
+    public static void registerUser(FacebookUser user) {
+        user.setAccessToken(AccessFB
+                .extenedAccessToken(user.getAccessToken()));
+        String sql = "INSERT INTO app_users ('user_fb_id','token',"
+                + "'username','pword','max_track_num','cluster_code',"
+                + "'ex_date','display_ name') VALUES('"
+                + user.getAccountID() + "','" + user.getAccessToken() + "','"
+                + user.getUsername() + "','" + user.getPassword() + "','"
+                + user.getSongListMax() + "','" + user.getClusterID() + "','"
+                + "2017-06-25','" + user.getDisplayName() + "');";
+        int status = AccessDB.getDBConnection().saveData(sql);
+    }
 }
