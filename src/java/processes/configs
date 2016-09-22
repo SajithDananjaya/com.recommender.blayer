@@ -1,11 +1,12 @@
-lastFMUserName::sajithdr
+lastFMUserName::sajithdt
 artistCountPerUser::50
 tagCountPerArtist::3
 postCountPerUser::100
-initialUserCount::51
+initialUserCount::20
+clusterCount::2
 learningStartBound::10
 userCountPerNewTag::3
-numberOfTracksPerUser::20
+numberOfTracksPerUser::70
 dbName::musicreco
 dbUser::code
 dbPassword::101201
@@ -18,5 +19,5 @@ tagInfoFilePath::./data/learnedTags.txt
 userInfoFilePath::./data/users.txt
 dataSetFilePath::./data/dataSet.arff
 logFilePath::./log.txt
-appInfoOne::530828057094884
-appInfoTwo::e275d764d5a339da4561578145f294f2
+appInfoOne::291703311201951
+appInfoTwo::867d5be03434aa10006d59d9ed510dab
