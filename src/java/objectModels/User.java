@@ -16,6 +16,10 @@ public abstract class User {
 
     private String username;
     private HashMap<Tag, Integer> musicTaste;
+    
+    public User(){
+        musicTaste = new HashMap<>();
+    }
 
     public User(String username) {
         this.username = username;
