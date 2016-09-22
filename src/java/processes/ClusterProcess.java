@@ -15,7 +15,10 @@ import weka.clusterers.SimpleKMeans;
 import weka.core.Instance;
 import weka.core.Instances;
 import objectModels.User;
+import objectModels.FacebookUser;
 import datahandlers.LastFMDataHandler;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 /**
  *
@@ -30,6 +33,7 @@ public class ClusterProcess {
     private Instances userPoints;
     private boolean clusterInitiated = false;
     private String[] clusters;
+    private String commonClusterID = "0";
 
     public int getClusterID(User user) {
         Instance userInstance = toInstance(user, userPoints);
@@ -37,7 +41,7 @@ public class ClusterProcess {
         return clusterNumber;
     }
 
-    public String[] getRelatedUsers(User user) {
+    public String[] getRelatedUsersID(FacebookUser user) {
         int clusterNumber = getClusterID(user);
         String[] userIDs = getClusterUser(clusterNumber);
         return userIDs;
@@ -49,9 +53,8 @@ public class ClusterProcess {
     }
 
     public void buildGraph(String filePath) {
-
-        System.out.println("May throw exception for poorly formated data files");
         try {
+            LOGGER.log(Level.INFO, "Clustering Started");
             userPoints = new Instances(getDataFile(filePath));
             int numberOfClusters = clusterCount(userPoints);
             int maxSeedAmount = seedAmount(userPoints);
@@ -60,6 +63,7 @@ public class ClusterProcess {
                 try {
                     dataGraph.buildClusterer(userPoints);
                     saveClusterInforamtion();
+                    setCommonCluster();
                     LOGGER.log(Level.INFO, "Clustering was completed");
                 } catch (Exception e) {
                     LOGGER.log(Level.SEVERE, "Error@ClusterProcess_initiateCluster", e);
@@ -76,7 +80,6 @@ public class ClusterProcess {
             dataGraph = new SimpleKMeans();
             dataGraph.setPreserveInstancesOrder(true);
             dataGraph.setSeed(randomSeedMax);
-            System.out.println("May throw exception if the cluster count is a negative value");
             try {
                 dataGraph.setNumClusters(clusterCount);
             } catch (Exception e) {
@@ -113,14 +116,14 @@ public class ClusterProcess {
     }
 
     private BufferedReader getDataFile(String filePath) {
-        BufferedReader inputReader = null;
-        System.out.println("May throw file not found exception for given path");
-        try {
-            inputReader = new BufferedReader(new FileReader(filePath));
-        } catch (FileNotFoundException e) {
-            LOGGER.log(Level.SEVERE, "Error@ClusterProcess_getDataFile", e);
-        }
-        return inputReader;
+//        BufferedReader inputReader = null;
+//        try {
+//            inputReader = new BufferedReader(new FileReader(filePath));
+//        } catch (FileNotFoundException e) {
+//            LOGGER.log(Level.SEVERE, "Error@ClusterProcess_getDataFile", e);
+//        }
+//        return inputReader;
+        return LastFMDataHandler.getDatasetShert(filePath);
     }
 
     private Instance toInstance(User user, Instances dataSet) {
@@ -140,8 +143,10 @@ public class ClusterProcess {
     }
 
     private int clusterCount(Instances dataPoints) {
-        int totalDataCount = dataPoints.numInstances();
-        return totalDataCount / 3;
+        String count = ConfigParameters.configParameter()
+                .getParameter("clusterCount");
+        int totalDataCount = Integer.parseInt(count);
+        return totalDataCount;
 //        return (int) Math.sqrt(totalDataCount);
     }
 
@@ -153,5 +158,22 @@ public class ClusterProcess {
         for (String s : clusters) {
             System.out.println(s);
         }
+    }
+
+    private void setCommonCluster() {
+        String largerCluster = "0";
+        int maxClusterItem = 0;
+        for (String cluster : clusters) {
+            String[] clusterItems = cluster.split("'");
+            if (clusterItems.length > maxClusterItem) {
+                largerCluster = clusterItems[0];
+                maxClusterItem = clusterItems.length;
+            }
+        }
+        this.commonClusterID = largerCluster;
+    }
+
+    public int getCommonClusterID() {
+        return Integer.parseInt(commonClusterID);
     }
 }
