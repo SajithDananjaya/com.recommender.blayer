@@ -1,0 +1,17 @@
+    .loading { 
+        font-size: 1.5em; 
+        font-family: Georgia; 
+        float: bottom;
+
+    }
+    a:link {
+        text-decoration: none;
+    }
+
+    #deployDiv:hover{
+        background-color: #cc0000;
+    }
+    img{
+    max-height: 100%;
+    max-width: 100%;
+}
