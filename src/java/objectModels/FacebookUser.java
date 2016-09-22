@@ -15,12 +15,15 @@ public class FacebookUser extends User {
 
     private String displayName;
     private String accessToken;
-    private int songListMax = 10;
+    private int songListMax;
     private String accountID;
     private int clusterID;
     private Date tokenExDate;
     private String password;
 
+    public FacebookUser(){
+    }
+    
     public FacebookUser(String username) {
         super(username);
     }
