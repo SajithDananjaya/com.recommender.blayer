@@ -23,9 +23,12 @@ import processes.ConfigParameters;
 public class AccessDB {
     
     private static final Logger LOGGER = AppLogger.getNewLogger(AccessDB.class.getName());
-    private final String DB_USERNAME = ConfigParameters.configParameter().getParameter("dbUser");
-    private final String DB_PASSWORD = ConfigParameters.configParameter().getParameter("dbPassword");
-    private final String DB_NAME = ConfigParameters.configParameter().getParameter("dbName");
+    private final String DB_USERNAME = ConfigParameters
+            .configParameter().getParameter("dbUser");
+    private final String DB_PASSWORD = ConfigParameters
+            .configParameter().getParameter("dbPassword");
+    private final String DB_NAME = ConfigParameters
+            .configParameter().getParameter("dbName");
     private final String DRIVER_CLASS = "com.mysql.jdbc.Driver";
     private final String DB_URL = "jdbc:mysql://localhost/" + DB_NAME;
     private static AccessDB dbConnectionObj; //Singelton DBConnection object
@@ -51,7 +54,6 @@ public class AccessDB {
         if (dbConnectionObj == null) {
             dbConnectionObj = new AccessDB();
         }
-
         return dbConnectionObj;
     }
 
@@ -70,7 +72,7 @@ public class AccessDB {
             saveStatus = sql.executeUpdate(sqlQuery);
             sql.close();
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Data saving failed", e);
+            LOGGER.log(Level.SEVERE, "Data saving failed SQL ERROR");
         }
 
         return saveStatus;
@@ -83,7 +85,7 @@ public class AccessDB {
             Statement sql = dbCon.createStatement();
             rs = sql.executeQuery(sqlQuery);
         } catch (SQLException e) {
-            LOGGER.log(Level.SEVERE, "Data retriving failed", e);
+            LOGGER.log(Level.SEVERE, "Data retriving failed SQL ERROR");
         }
         return rs;
     }
