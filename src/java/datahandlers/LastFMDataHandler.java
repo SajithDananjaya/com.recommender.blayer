@@ -16,6 +16,10 @@ import java.util.logging.Logger;
 import java.util.logging.Level;
 
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.Writer;
+import java.net.URISyntaxException;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -59,6 +63,7 @@ public class LastFMDataHandler {
     public static void initiateUsers() {
         loadPreviousData();
         for (String user : getBaseUsers()) {
+            LOGGER.log(Level.INFO, "Initiating user " + user);
             LastFMUser tempUser = new LastFMUser(user);//Initates the LastFm User
             for (String artist : getUserArtistList(user)) {
                 if (!initialArtists.containsKey(artist)) {
@@ -77,6 +82,7 @@ public class LastFMDataHandler {
         }
         saveTagInfo();
         saveArtistInfo();
+        buildDataSheet();
     }
 
     private static void initiateArtist(String artist) {
@@ -91,7 +97,8 @@ public class LastFMDataHandler {
                 artistTags.add(initialTags.get(tag));
             }
         } catch (Exception e) {
-            System.out.println("initiate artist failed [" + artist + "]");
+            String msg = "initiate artist failed [" + artist + "]";
+            LOGGER.log(Level.WARNING, msg);
         }
         tempArtist.addTagSet(artistTags);
         initialArtists.put(artist, tempArtist);
@@ -173,6 +180,7 @@ public class LastFMDataHandler {
                 .configParameter().getParameter("numberOfTracksPerUser"));
         String method = "user.getLovedTracks"
                 + "&user=" + user;
+        LOGGER.log(Level.INFO, "Adding song list for " + user);
         List<String> songsList = null;
         try {
             URL url = AccessLastFM.getURL(method, songCount);
@@ -182,7 +190,7 @@ public class LastFMDataHandler {
             songsList = AccessLastFM.extractAttributes(songListInfo, "mbid");
         } catch (IOException | ParserConfigurationException | SAXException ex) {
             String msg = "User track list unreachable or currupted";
-            //LOGGER.log(Level.SEVERE, msg, ex);
+            LOGGER.log(Level.SEVERE, msg);
         }
         return songsList;
     }
@@ -192,7 +200,6 @@ public class LastFMDataHandler {
                 + "&mbid=" + mbid;
         try {
             URL url = AccessLastFM.getURL(method, 1);
-            System.out.println(url.toString());
             Document trackInfoXML = AccessLastFM.getResponse(url);
             Node trackInfo = AccessLastFM
                     .getElementList(trackInfoXML, "track").item(0);
@@ -226,12 +233,12 @@ public class LastFMDataHandler {
                         .extractSingleAttribute(artistInfo, "name", 0)
                         .replace("'", "");
             }
-            
+
             String trackImage = "N/A";
             if (AccessLastFM
                     .extractSingleAttribute(artistInfo, "name", 0) != null) {
                 trackImage = AccessLastFM
-                    .extractSingleAttribute(albumInfo, "image", 6);
+                        .extractSingleAttribute(albumInfo, "image", 6);
             }
 
             tempSong.setTrackName(trackName);
@@ -257,9 +264,12 @@ public class LastFMDataHandler {
 
     private static void loadPreviousData() {
         currentTagID = 1;
+        LOGGER.log(Level.INFO, "Loading previous tag details");
         initialTags = loadSavedTags();
         currentTagID = initialTags.size() + 1;
+        LOGGER.log(Level.INFO, "Loading previous artist details");
         initialArtists = loadSavedArtists();
+        LOGGER.log(Level.INFO, "Loading previous song details");
         loadSavedTracks();
     }
 
@@ -329,14 +339,10 @@ public class LastFMDataHandler {
     }
 
     private static BufferedReader getReader(String filePath) {
-        File tempFile = new File(filePath);
-        FileReader fileReader = null;
-        try {
-            fileReader = new FileReader(tempFile);
-        } catch (IOException e) {
-            LOGGER.log(Level.SEVERE, "Reading file failed");
-        }
-        return new BufferedReader(fileReader);
+        InputStream is = LastFMDataHandler
+                .class.getResourceAsStream(filePath);
+        BufferedReader file = new BufferedReader(new InputStreamReader(is));
+        return file;
     }
 
     public static void saveTagInfo() {
@@ -346,7 +352,6 @@ public class LastFMDataHandler {
             for (String tagName : initialTags.keySet()) {
                 Tag t = initialTags.get(tagName);
                 String data = t.getID() + "," + t.getName();
-                // System.err.println(data);
                 tempWriter.write(data + "\n");
             }
             tempWriter.close();
@@ -375,10 +380,9 @@ public class LastFMDataHandler {
     }
 
     public static void buildDataSheet() {
-        String dataSheetPath = ConfigParameters
-                .configParameter().getParameter("dataSetFilePath");
+        String dataSheetPath=ConfigParameters.configParameter()
+                .getParameter("dataSetFilePath");
         BufferedWriter tempWriter = getWriter(dataSheetPath);
-
         try {
             tempWriter.write("@relation dataSet");
             tempWriter.newLine();
@@ -407,20 +411,28 @@ public class LastFMDataHandler {
             LOGGER.log(Level.SEVERE, "File path for saving dataset is invalid", e);
         }
     }
-
+    
     private static BufferedWriter getWriter(String filePath) {
-        File tempFile = new File(filePath);
+        URL fileURL = LastFMDataHandler.class.getResource(filePath);
         BufferedWriter bufferedWriter = null;
         try {
+            File tempFile = new File(fileURL.toURI());
             if (!tempFile.exists()) {
                 tempFile.createNewFile();
             }
             FileWriter fileWriter = new FileWriter(tempFile.getAbsoluteFile());
             bufferedWriter = new BufferedWriter(fileWriter);
-        } catch (IOException e) {
+        } catch (IOException | URISyntaxException e) {
             LOGGER.log(Level.SEVERE, "File path is invalid", e);
         }
         return bufferedWriter;
+    }
+    
+    public static BufferedReader getDatasetShert(String dataSheetPath){
+        InputStream is = LastFMDataHandler
+                .class.getResourceAsStream(dataSheetPath);
+        BufferedReader file = new BufferedReader(new InputStreamReader(is));
+        return file;
     }
 
     public static List<User> getInitialUserList() {
@@ -452,5 +464,9 @@ public class LastFMDataHandler {
 
     public static User getInitiatedUser(String userID) {
         return initialUsers.get(userID);
+    }
+    
+    public static int getCurrentTagID(){
+        return currentTagID;
     }
 }
